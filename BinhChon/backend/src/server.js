@@ -1,11 +1,21 @@
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const { createPublicClient, defineChain, http, parseAbi } = require("viem");
-require("dotenv").config();
+
+// Luôn load file .env ở thư mục backend gốc, dù chạy từ backend/src
+const envPath = path.resolve(__dirname, "..", ".env");
+require("dotenv").config({ path: envPath });
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Log mỗi request để dễ debug
+app.use((req, _res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 const rpcUrl = process.env.CRONOS_TESTNET_RPC_URL || "https://evm-t3.cronos.org";
 const contractAddress = process.env.CONTRACT_ADDRESS;
@@ -67,14 +77,17 @@ app.get("/health", (_req, res) => {
 
 app.get("/polls", async (_req, res) => {
   if (!contractAddress) {
+    console.error("Missing CONTRACT_ADDRESS in .env at", envPath);
     return res.status(500).json({ error: "Missing CONTRACT_ADDRESS in .env" });
   }
 
   try {
+    console.log("Reading total polls from", contractAddress);
     const total = Number(
       await client.readContract({ address: contractAddress, abi: votingAbi, functionName: "totalPolls" })
     );
 
+    console.log("Total polls:", total);
     const ids = Array.from({ length: total }, (_, i) => i);
     const polls = await Promise.all(ids.map((id) => readPoll(id)));
 
@@ -93,6 +106,7 @@ app.get("/polls/:id", async (req, res) => {
   const pollId = Number(req.params.id);
 
   try {
+    console.log(`Reading poll ${pollId} from`, contractAddress);
     const poll = await readPoll(pollId);
     res.json(poll);
   } catch (err) {
