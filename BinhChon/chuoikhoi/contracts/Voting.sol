@@ -46,8 +46,8 @@ contract Voting {
         _;
     }
 
-    modifier onlyStudent() {
-        require(roles[msg.sender] == Role.Student, "not-student");
+    modifier onlyStudentOrUnassigned() {
+        require(roles[msg.sender] != Role.Teacher, "not-student");
         _;
     }
 
@@ -105,7 +105,7 @@ contract Voting {
         return pollId;
     }
 
-    function vote(uint256 pollId, uint256 optionId) external onlyStudent {
+    function vote(uint256 pollId, uint256 optionId) external onlyStudentOrUnassigned {
         require(pollId < polls.length, "poll-not-found");
         Poll storage poll = polls[pollId];
         require(poll.active, "poll-closed");

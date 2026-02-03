@@ -115,8 +115,8 @@ function App() {
         setMessage("Cần MetaMask để bình chọn");
         return;
       }
-      if (role !== "student") {
-        setMessage("Chỉ sinh viên được bình chọn");
+      if (role === "teacher") {
+        setMessage("Giảng viên không được bình chọn");
         return;
       }
 
@@ -190,7 +190,7 @@ function App() {
     [ensureCronos, fetchPolls, newPoll, owner, wallet]
   );
 
-  const isStudent = role === "student";
+  const isStudent = role === "student" || role === ""; // chưa gán xem như sinh viên
   const isTeacher = role === "teacher";
   const canCreateTeacher = isTeacher && !!CONTRACT_ADDRESS;
 
@@ -324,7 +324,7 @@ function App() {
           {polls.map((poll) => {
             const totalVotes = poll.votes.reduce((s, v) => s + v, 0);
             const state = poll.state || "live";
-            const disabled = state !== "live" || !wallet || !isStudent;
+            const disabled = state !== "live" || !wallet || role === "teacher";
 
             return (
               <div key={poll.id} className="card poll-card">
